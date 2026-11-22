@@ -1,12 +1,14 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { bindAnatomyRig } from './anatomyRig';
+import { createSkinMaterial, SKIN_BONE_SOURCE_OFFSET } from './anatomySkin';
 
 /**
  * Maps raw anatomical mesh names to parent body part and specific anatomical subdivision / head.
  */
 export function getGymFitBodyPart(rawName) {
   if (!rawName) return { bodyPart: 'Other', subdivision: null };
-  const n = rawName.toLowerCase();
+  const n = rawName.replaceAll('_', ' ').toLowerCase();
 
   // Biceps: Long Head (Outer Head), Short Head (Inner Head), Brachialis, Coracobrachialis
   if (
@@ -314,7 +316,7 @@ export const hoverMaterial = new THREE.MeshStandardMaterial({
 
 /**
  * Loads both anatomy.glb (muscles/tendons) and skeleton.glb (bones).
- * Returns { bodyGroup, muscleMeshes, skeletonGroup, groupMeshMap, bodyBox, bodyCenter, bodySize }
+ * Returns the assembled anatomy, its rest bounds, and the shared movement rig.
  */
 export function load3DAnatomyModel(onProgress) {
   return new Promise((resolve, reject) => {
@@ -324,11 +326,13 @@ export function load3DAnatomyModel(onProgress) {
     bodyGroup.name = 'HumanBodyAnatomy';
 
     const muscleMeshes = [];
+    const muscleGroup = new THREE.Group();
+    muscleGroup.name = 'Musculature';
     const skeletonGroup = new THREE.Group();
     skeletonGroup.name = 'SkeletalFramework';
     const groupMeshMap = {};
 
-    bodyGroup.add(skeletonGroup);
+    bodyGroup.add(skeletonGroup, muscleGroup);
 
     const baseUrl = import.meta.env?.BASE_URL || '/';
     const cleanBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
@@ -391,7 +395,7 @@ export function load3DAnatomyModel(onProgress) {
           transformGeometry(geometry, anatomyCenter, scaleFactor);
 
           const mat = isTendon ? tendonMaterial : defaultMuscleMaterial;
-          const mesh = new THREE.Mesh(geometry, mat);
+          const mesh = new THREE.SkinnedMesh(geometry, mat);
           mesh.castShadow = true;
           mesh.receiveShadow = true;
           mesh.renderOrder = 1;
@@ -403,6 +407,7 @@ export function load3DAnatomyModel(onProgress) {
             bodyPart,
             subdivision,
             isTendon,
+            skinSourceId: anatomyGLTF.parser.associations.get(child)?.meshes,
             originalMaterial: mat
           };
 
@@ -421,7 +426,7 @@ export function load3DAnatomyModel(onProgress) {
           }
 
           muscleMeshes.push(mesh);
-          bodyGroup.add(mesh);
+          muscleGroup.add(mesh);
           muscleCount++;
         });
 
@@ -436,12 +441,14 @@ export function load3DAnatomyModel(onProgress) {
           const geometry = child.geometry.clone();
           transformGeometry(geometry, anatomyCenter, scaleFactor);
 
-          const boneMesh = new THREE.Mesh(geometry, boneMaterial);
+          const boneMesh = new THREE.SkinnedMesh(geometry, boneMaterial);
           boneMesh.castShadow = false;
           boneMesh.receiveShadow = false;
           boneMesh.renderOrder = 0;
 
+          const sourceIndex = skeletonGLTF.parser.associations.get(child)?.meshes;
           boneMesh.userData = {
+            skinSourceId: Number.isInteger(sourceIndex) ? SKIN_BONE_SOURCE_OFFSET + sourceIndex : null,
             rawName: child.name || `bone_${boneCount}`,
             displayName: formatMuscleName(child.name || `bone_${boneCount}`),
             isBone: true
@@ -453,21 +460,39 @@ export function load3DAnatomyModel(onProgress) {
 
         console.log(`[3D Anatomy] Processed ${boneCount} skeletal bone meshes.`);
 
-        // 3. Final Bounding Box & Centering
+        // 3. Bind the meshes before reading their rest bounds.
+        const rig = bindAnatomyRig(bodyGroup, muscleMeshes, skeletonGroup.children, anatomyCenter, scaleFactor);
         const bodyBox = new THREE.Box3().setFromObject(bodyGroup);
         const bodyCenter = bodyBox.getCenter(new THREE.Vector3());
         const bodySize = bodyBox.getSize(new THREE.Vector3());
-
         if (onProgress) onProgress(100);
+
+        const loadSkin = async () => {
+          const { scene } = await loader.loadAsync(`${cleanBase}anatomy3d/skin.glb?v=3`);
+          const surface = scene.getObjectByName('FittedSkin');
+          if (!surface?.isMesh) throw new Error('The fitted skin surface is missing.');
+
+          transformGeometry(surface.geometry, anatomyCenter, scaleFactor);
+          const material = createSkinMaterial(surface.geometry.hasAttribute('color'), anatomyCenter, scaleFactor);
+          const mesh = new THREE.SkinnedMesh(surface.geometry, material);
+          mesh.name = 'Skin';
+          mesh.visible = false;
+          mesh.receiveShadow = true;
+          mesh.renderOrder = 2;
+          return mesh;
+        };
 
         resolve({
           bodyGroup,
           muscleMeshes,
+          muscleGroup,
           skeletonGroup,
+          loadSkin,
           groupMeshMap,
           bodyBox,
           bodyCenter,
-          bodySize
+          bodySize,
+          rig
         });
       })
       .catch((err) => {

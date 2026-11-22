@@ -1,102 +1,76 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { useAuth } from '../../context/AuthMockContext';
-import {
-  LayoutDashboard,
-  Dumbbell,
-  LineChart,
-  ClipboardList,
-  LogOut,
-  Building2
-} from 'lucide-react';
+import React, { useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { Building2, ClipboardList, Dumbbell, LayoutDashboard, LogOut, ScanLine } from 'lucide-react';
+import { roles } from '../../data/roles';
+import { memberFeatureLinks, roleWorkspaces, workspacePath } from '../../data/workspaceNavigation';
+import { useAuth } from '../../context/AuthContext';
+import { Brand } from './Brand';
 
-export const Sidebar = () => {
-  const { currentUser, currentRole, logout } = useAuth();
+const toolLinks = {
+  MEMBER: [
+    ...memberFeatureLinks,
+    ['Workout planner', '/planner', ClipboardList],
+    ['Exercise library', '/exercises', Dumbbell],
+    ['3D anatomy', '/member/workout-plan', ScanLine],
+  ],
+  TRAINER: [
+    ['Split planner', '/planner', ClipboardList],
+    ['Exercise library', '/exercises', Dumbbell],
+    ['3D anatomy', '/anatomy', ScanLine],
+  ],
+  GYM_OWNER: [
+    ['Program planner', '/planner', ClipboardList],
+    ['Exercise library', '/exercises', Dumbbell],
+    ['3D anatomy', '/anatomy', ScanLine],
+  ],
+  PLATFORM_ADMIN: [],
+};
 
-  const memberLinks = [
-    { name: 'Overview', to: '/dashboard/member', icon: LayoutDashboard },
-    { name: 'Workout Routine', to: '/planner', icon: ClipboardList },
-    { name: 'Exercise Library', to: '/exercises', icon: Dumbbell },
-    { name: 'Biometrics & PRs', to: '/progress', icon: LineChart },
+export const Sidebar = ({ roleKey, closeMenu }) => {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+  const [leaving, setLeaving] = useState(false);
+  const [error, setError] = useState(false);
+  const role = roles[roleKey];
+  const links = [
+    [roleKey === 'PLATFORM_ADMIN' ? 'Platform overview' : 'Overview', role.path, LayoutDashboard],
+    ...roleWorkspaces[roleKey].sections.map(([section, label, Icon]) => [label, workspacePath(roleKey, section), Icon]),
+    ...toolLinks[roleKey],
   ];
 
-  const trainerLinks = [
-    { name: 'Trainer Hub', to: '/dashboard/trainer', icon: LayoutDashboard },
-    { name: 'Split Planner', to: '/planner', icon: ClipboardList },
-    { name: 'Exercise Bank', to: '/exercises', icon: Dumbbell },
-    { name: 'Client Progress', to: '/progress', icon: LineChart },
-  ];
-
-  const ownerLinks = [
-    { name: 'Operations', to: '/dashboard/owner', icon: LayoutDashboard },
-    { name: 'Exercise Catalog', to: '/exercises', icon: Dumbbell },
-    { name: 'Program Splits', to: '/planner', icon: ClipboardList },
-    { name: 'Retention & Trends', to: '/progress', icon: LineChart },
-  ];
-
-  const links =
-    currentRole === 'GYM_OWNER'
-      ? ownerLinks
-      : currentRole === 'TRAINER'
-      ? trainerLinks
-      : memberLinks;
+  const exit = async () => {
+    setLeaving(true);
+    setError(false);
+    try {
+      await signOut();
+      navigate('/', { replace: true });
+    } catch {
+      setError(true);
+    } finally {
+      setLeaving(false);
+    }
+  };
 
   return (
-    <aside className="w-56 shrink-0 hidden md:flex flex-col justify-between border-r border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/40 p-3 min-h-[calc(100vh-3.5rem)]">
-      <div className="space-y-4">
-        
-        {/* User Persona Profile */}
-        <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800">
-          <img
-            src={currentUser?.avatar}
-            alt={currentUser?.name}
-            className="w-8 h-8 rounded-lg object-cover"
-          />
-          <div className="overflow-hidden min-w-0">
-            <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
-              {currentUser?.name}
-            </h4>
-            <p className="text-[10px] uppercase font-semibold text-slate-400 dark:text-slate-500 tracking-wider">
-              {currentRole.replace('_', ' ')}
-            </p>
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <nav className="space-y-0.5">
-          {links.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.name}
-                to={item.to}
-                end={item.to.startsWith('/dashboard/')}
-                className={({ isActive }) => `
-                  flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all
-                  ${
-                    isActive
-                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950 font-semibold shadow-sm'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white'
-                  }
-                `}
-              >
-                <Icon className="w-4 h-4 shrink-0" />
-                <span>{item.name}</span>
-              </NavLink>
-            );
-          })}
-        </nav>
-
+    <aside className="workspace-sidebar">
+      <Brand />
+      <div className="workspace-identity">
+        <Building2 size={18} aria-hidden="true" />
+        <strong>{role.label}</strong>
       </div>
-
-      {/* Logout / Switch Role */}
-      <button
-        onClick={logout}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 transition-colors w-full"
-      >
-        <LogOut className="w-3.5 h-3.5" />
-        <span>Exit Session</span>
-      </button>
+      <nav className="workspace-links" aria-label="Workspace navigation">
+        {links.map(([label, path, Icon]) => (
+          <NavLink key={path} to={path} end onClick={closeMenu}>
+            <Icon size={18} aria-hidden="true" /> {label}
+          </NavLink>
+        ))}
+      </nav>
+      <div className="sidebar-bottom">
+        <button type="button" disabled={leaving} onClick={exit}>
+          <LogOut size={17} aria-hidden="true" /> {leaving ? 'Signing out…' : 'Sign out'}
+        </button>
+        {error && <p role="alert" className="px-2 text-xs text-rose-300">Could not sign out. Try again.</p>}
+      </div>
     </aside>
   );
 };

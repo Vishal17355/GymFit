@@ -1,35 +1,34 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   darkMode: 'class',
   theme: {
     extend: {
       colors: {
+        slate: {
+          50: '#f6f7ef', 100: '#eef0e8', 200: '#dce0d4', 300: '#c9d0c2',
+          400: '#81907e', 500: '#5e6c5c', 600: '#495646', 700: '#3b4739',
+          800: '#333d30', 900: '#212820', 950: '#151b15',
+        },
+        cyan: {
+          50: '#f0f7e5', 100: '#e6f2d2', 200: '#d7e8b4', 300: '#c8e590',
+          400: '#b9db70', 500: '#8ab039', 600: '#527322', 700: '#405b1b',
+          800: '#364a1e', 900: '#29391a', 950: '#1d2a14',
+        },
         gym: {
-          dark: '#0a0e17',
-          surface: '#111827',
-          card: '#182234',
-          border: '#243247',
-          accent: '#06b6d4',
-          'accent-hover': '#0891b2',
-          neon: '#10b981',
-          gold: '#f59e0b',
-          rose: '#f43f5e',
-          violet: '#8b5cf6'
-        }
+          dark: '#161a16',
+          surface: '#202620',
+          card: '#282e26',
+          border: '#3a4438',
+          accent: '#b9db70',
+          'accent-hover': '#d8f963',
+        },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: ['DM Sans', 'system-ui', 'sans-serif'],
+        display: ['Barlow Condensed', 'Arial Narrow', 'sans-serif'],
       },
-      boxShadow: {
-        'glow-cyan': '0 0 20px -5px rgba(6, 182, 212, 0.4)',
-        'glow-emerald': '0 0 20px -5px rgba(16, 185, 129, 0.4)',
-        'card-dark': '0 4px 20px -2px rgba(0, 0, 0, 0.5)',
-      }
     },
   },
   plugins: [],
-}
+};

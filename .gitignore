@@ -1,2 +1,8 @@
 node_modules 
 dist
+.env
+.env.*
+!.env.example
+backend/ca.pem
+backend/target/
+backend/truststore.p12

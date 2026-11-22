@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { exerciseMotions } from '../data/exerciseMotions';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
+import { WorkspaceHeading } from '../components/layout/WorkspaceHeading';
 import { Card, CardBody } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { Badge } from '../components/common/Badge';
@@ -7,6 +10,7 @@ import { mockExercises } from '../data/mockData';
 import {
   Search,
   Info,
+  Play,
   X,
   Layers,
   Sparkles
@@ -28,43 +32,29 @@ export const ExerciseLibrary = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-5 max-w-6xl mx-auto">
-        
-        {/* Header Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
-          <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Exercise Bank</span>
-              <span className="text-slate-300 dark:text-slate-700">/</span>
-              <span className="text-xs text-slate-400 font-mono">{filteredExercises.length} Movements</span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">
-              Movement Catalog
-            </h1>
-          </div>
-
-          {/* Search Input */}
-          <div className="w-full sm:w-72 relative">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Filter by name or muscle..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500"
-            />
-          </div>
-        </div>
+      <div className="dashboard-stack">
+        <WorkspaceHeading
+          label="Training tools"
+          title="Exercise library"
+          description="Find movements by muscle group and review form and coaching cues."
+          action={
+            <label className="compact-search exercise-search">
+              <Search size={17} />
+              <input aria-label="Search exercises" placeholder="Search exercises" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />
+            </label>
+          }
+        />
 
         {/* Muscle Filter Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+        <div className="flex items-center flex-wrap gap-2 text-sm">
           {muscleGroups.map((group) => (
             <button
               key={group}
+              aria-pressed={selectedMuscle === group}
               onClick={() => setSelectedMuscle(group)}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
                 selectedMuscle === group
-                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-sm'
+                  ? 'bg-[color:var(--role-color)] text-slate-950'
                   : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -88,7 +78,7 @@ export const ExerciseLibrary = () => {
                   </span>
                 </div>
 
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                <h3 className="font-display text-2xl font-bold leading-none">
                   {ex.name}
                 </h3>
                 
@@ -110,11 +100,19 @@ export const ExerciseLibrary = () => {
 
               </CardBody>
 
-              <div className="p-3 pt-0 border-t border-slate-100 dark:border-slate-800/80">
+              <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 p-3 dark:border-slate-800/80">
+                {exerciseMotions[ex.id] && (
+                  <Link
+                    className="action action-small action-outline"
+                    to={`/anatomy?exercise=${ex.id}`}
+                  >
+                    <Play size={15} aria-hidden="true" /> Watch in 3D
+                  </Link>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full text-xs"
+                  className="text-xs"
                   icon={Info}
                   onClick={() => setActiveModalExercise(ex)}
                 >
@@ -125,6 +123,8 @@ export const ExerciseLibrary = () => {
           ))}
         </div>
 
+        {!filteredExercises.length && <p role="status" className="workspace-description">No exercises match your filters.</p>}
+
         {/* Modal for detailed cues */}
         {activeModalExercise && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-150">
@@ -132,6 +132,7 @@ export const ExerciseLibrary = () => {
               
               <button
                 onClick={() => setActiveModalExercise(null)}
+                aria-label="Close exercise details"
                 className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800"
               >
                 <X className="w-3.5 h-3.5" />

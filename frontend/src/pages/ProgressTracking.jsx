@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
+import { WorkspaceHeading } from '../components/layout/WorkspaceHeading';
 import { Card, CardBody, CardHeader } from '../components/common/Card';
 import { StatsCard } from '../components/common/StatsCard';
 import { Button } from '../components/common/Button';
 import { Badge } from '../components/common/Badge';
 import { Input } from '../components/common/Input';
-import { mockBodyMetrics, mockUsers } from '../data/mockData';
+import { mockBodyMetrics, sampleMemberTraining } from '../data/mockData';
 import {
   LineChart,
   Trophy,
@@ -25,7 +26,7 @@ export const ProgressTracking = () => {
     e.preventDefault();
     if (!newWeight) return;
     const newEntry = {
-      date: 'Nov 2026',
+      date: new Intl.DateTimeFormat('en-GB', { month: 'short', year: 'numeric' }).format(new Date()),
       weightKg: parseFloat(newWeight),
       bodyFatPct: parseFloat(newBf) || 13.2,
       muscleMassKg: 43.1
@@ -43,33 +44,14 @@ export const ProgressTracking = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-5 max-w-6xl mx-auto">
-        
-        {/* Header Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
-          <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Analytics</span>
-              <span className="text-slate-300 dark:text-slate-700">/</span>
-              <span className="text-xs text-slate-400 font-mono">6 Months</span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">
-              Biometric Trajectory
-            </h1>
-          </div>
-
-          <Button
-            variant="primary"
-            size="sm"
-            icon={Plus}
-            onClick={() => setShowLogModal(true)}
-          >
-            Log Entry
-          </Button>
-        </div>
-
-        {/* 4 Metric Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="dashboard-stack">
+        <WorkspaceHeading
+          label="Training tools"
+          title="Progress tracking"
+          description="Review your measurements and personal records."
+          action={<Button icon={Plus} onClick={() => setShowLogModal(true)}>Log measurement</Button>}
+        />
+        <div className="dashboard-metrics">
           <StatsCard
             title="Weight"
             value={`${latest.weightKg} kg`}
@@ -96,7 +78,7 @@ export const ProgressTracking = () => {
           />
           <StatsCard
             title="Bench 1RM"
-            value={mockUsers.member.personalBest1RM.benchPress}
+            value={sampleMemberTraining.personalBest1RM.benchPress}
             subtitle="Verified PR"
             icon={Trophy}
           />
@@ -105,8 +87,8 @@ export const ProgressTracking = () => {
         {/* 6-Month Visual Progression Bar Chart */}
         <Card className="border-slate-200 dark:border-slate-800">
           <CardHeader
-            title="Body Composition Trajectory"
-            action={<span className="text-[11px] font-mono text-slate-400 font-medium">May &bull; Oct 2026</span>}
+            title="Body composition"
+            subtitle="Most recent six measurements"
           />
           <CardBody className="p-5">
             
@@ -116,13 +98,13 @@ export const ProgressTracking = () => {
               <div className="absolute inset-x-0 top-24 border-b border-dashed border-slate-100 dark:border-slate-800/60" />
               <div className="absolute inset-x-0 top-38 border-b border-dashed border-slate-100 dark:border-slate-800/60" />
 
-              {metricsList.map((m) => {
+              {metricsList.slice(-6).map((m, index) => {
                 const normalizedHeight = Math.max(20, Math.min(100, ((m.weightKg - 77) / (84 - 77)) * 100));
 
                 return (
-                  <div key={m.date} className="flex flex-col items-center gap-1.5 group z-10 flex-1">
+                  <div key={`${m.date}-${index}`} className="flex flex-col items-center gap-1.5 group z-10 flex-1">
                     <span className="text-[10px] font-mono font-bold text-slate-600 dark:text-slate-300">
-                      {m.weightKg}k
+                      {m.weightKg} kg
                     </span>
                     
                     <div className="w-6 sm:w-10 bg-slate-100 dark:bg-slate-800 rounded-t-lg overflow-hidden h-36 flex items-end">

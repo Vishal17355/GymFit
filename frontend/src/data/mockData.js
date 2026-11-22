@@ -1,52 +1,11 @@
-export const mockUsers = {
-  member: {
-    id: 101,
-    name: 'Alex Rivera',
-    email: 'alex.rivera@example.com',
-    role: 'MEMBER',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    gymName: 'Apex Fitness Hub',
-    branch: 'Downtown Flagship',
-    membershipPlan: 'Pro Athlete Annual',
-    membershipStatus: 'ACTIVE',
-    membershipExpiry: '2027-08-15',
-    qrCodeHash: 'GYMFIT-MEMBER-99281-ALEX',
-    currentStreak: 18,
-    totalWorkouts: 142,
-    personalBest1RM: {
-      benchPress: '115 kg',
-      squat: '160 kg',
-      deadlift: '210 kg'
-    }
+export const sampleMemberTraining = {
+  currentStreak: 18,
+  totalWorkouts: 142,
+  personalBest1RM: {
+    benchPress: '115 kg',
+    squat: '160 kg',
+    deadlift: '210 kg',
   },
-  trainer: {
-    id: 201,
-    name: 'Marcus Vance',
-    email: 'marcus.vance@apexfit.com',
-    role: 'TRAINER',
-    avatar: 'https://images.unsplash.com/photo-1567013127542-490d757e51fc?w=150&auto=format&fit=crop&q=80',
-    gymName: 'Apex Fitness Hub',
-    branch: 'Downtown Flagship',
-    specialization: 'Hypertrophy & Strength Conditioning',
-    certification: 'CSCS & NASM-CPT',
-    activeClientsCount: 16,
-    classesToday: 2,
-    rating: 4.9
-  },
-  owner: {
-    id: 301,
-    name: 'Eleanor Sterling',
-    email: 'eleanor@apexfit.com',
-    role: 'GYM_OWNER',
-    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
-    gymName: 'Apex Fitness Hub',
-    slug: 'apex-fitness',
-    branchesCount: 3,
-    activeMembersCount: 1428,
-    liveOccupancy: 68,
-    maxCapacity: 160,
-    mrr: '$48,250'
-  }
 };
 
 export const mockExercises = [
@@ -206,6 +165,8 @@ export const mockClasses = [
 ];
 
 export const mockOwnerStats = {
+  gymName: 'Apex Fitness Hub',
+  slug: 'apex-fitness',
   activeMembers: 1428,
   activeMembersChange: '+8.4%',
   liveOccupancy: 68,
@@ -232,4 +193,17 @@ export const mockTrainerClients = [
   { id: 102, name: 'Chloe Dubois', goal: 'Fat Loss & Core Stability', plan: 'Full Body Circuit', adherence: '88%', lastActive: 'Yesterday' },
   { id: 103, name: 'Liam Zhang', goal: 'Powerlifting Meet Prep', plan: '5/3/1 Heavy Cycle', adherence: '96%', lastActive: '2 days ago' },
   { id: 104, name: 'Samantha Reed', goal: 'Postural Rehabilitation', plan: 'Mobility & Glute Activation', adherence: '78%', lastActive: '3 days ago' }
+];
+
+export const mockPlatformGyms = [
+  { name: mockOwnerStats.gymName, slug: mockOwnerStats.slug, plan: 'Pro', members: mockOwnerStats.activeMembers, subscription: 299, status: 'Active' },
+  { name: 'Iron Works Club', slug: 'iron-works', plan: 'Starter', members: 268, subscription: 99, status: 'Active' },
+  { name: 'Form Athletics', slug: 'form-athletics', plan: 'Pro', members: 516, subscription: 299, status: 'Active' },
+  { name: 'Fieldhouse Training', slug: 'fieldhouse', plan: 'Starter', members: 82, subscription: 0, status: 'Suspended' },
+];
+
+export const mockPlatformActivity = [
+  { event: 'Subscription renewed', gym: 'Apex Fitness Hub', when: 'Today' },
+  { event: 'New gym onboarded', gym: 'Form Athletics', when: 'Yesterday' },
+  { event: 'Organization suspended', gym: 'Fieldhouse Training', when: '2 days ago' },
 ];

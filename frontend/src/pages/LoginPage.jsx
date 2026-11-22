@@ -1,149 +1,46 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Navbar } from '../components/layout/Navbar';
-import { Card, CardBody } from '../components/common/Card';
-import { Button } from '../components/common/Button';
+import { Link, Navigate, useLocation } from 'react-router-dom';
+import { ArrowUpRight } from 'lucide-react';
+import { AuthLayout } from '../components/layout/AuthLayout';
+import { useAuth } from '../context/AuthContext';
+import { roles } from '../data/roles';
 import { Input } from '../components/common/Input';
-import { useAuth } from '../context/AuthMockContext';
-import { Dumbbell, Lock, Mail, ArrowRight } from 'lucide-react';
+import { Button } from '../components/common/Button';
 
-export const LoginPage = () => {
-  const { login } = useAuth();
-  const navigate = useNavigate();
+export function LoginPage() {
+  const { user, checking, signIn } = useAuth();
+  const { state } = useLocation();
+  const [error, setError] = useState('');
+  const [pending, setPending] = useState(false);
 
-  const [selectedRole, setSelectedRole] = useState('MEMBER');
-  const [email, setEmail] = useState('alex.rivera@example.com');
-  const [password, setPassword] = useState('password123');
-  const [loading, setLoading] = useState(false);
+  if (user) return <Navigate to={roles[user.role].path} replace />;
 
-  const roleCredentials = {
-    MEMBER: { email: 'alex.rivera@example.com', name: 'Alex Rivera', roleTitle: 'Member', route: '/dashboard/member' },
-    TRAINER: { email: 'marcus.vance@apexfit.com', name: 'Marcus Vance', roleTitle: 'Trainer', route: '/dashboard/trainer' },
-    GYM_OWNER: { email: 'eleanor@apexfit.com', name: 'Eleanor Sterling', roleTitle: 'Owner', route: '/dashboard/owner' },
-  };
-
-  const handleRoleSelect = (role) => {
-    setSelectedRole(role);
-    setEmail(roleCredentials[role].email);
-    setPassword('secret_pass_2026');
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setTimeout(() => {
-      login(selectedRole);
-      setLoading(false);
-      navigate(roleCredentials[selectedRole].route);
-    }, 250);
+  const submit = async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    setError('');
+    setPending(true);
+    try {
+      await signIn(data.get('email'), data.get('password'));
+      form.reset();
+    } catch (failure) {
+      setError(failure instanceof TypeError ? 'Could not reach GymFit. Try again.' : failure.message);
+    } finally {
+      setPending(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-gym-dark transition-colors">
-      <Navbar />
-
-      <div className="flex-1 flex items-center justify-center p-4 py-12">
-        <div className="w-full max-w-sm">
-          
-          <div className="text-center mb-5">
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-              Sign In to Workspace
-            </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Select persona to test role-specific features
-            </p>
-          </div>
-
-          <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
-            {/* Clean Segmented Tab Control */}
-            <div className="p-1 m-3 mb-0 rounded-lg bg-slate-100 dark:bg-slate-950 flex items-center text-xs">
-              <button
-                type="button"
-                onClick={() => handleRoleSelect('MEMBER')}
-                className={`flex-1 py-1 rounded-md font-semibold transition-all ${
-                  selectedRole === 'MEMBER'
-                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                Member
-              </button>
-              <button
-                type="button"
-                onClick={() => handleRoleSelect('TRAINER')}
-                className={`flex-1 py-1 rounded-md font-semibold transition-all ${
-                  selectedRole === 'TRAINER'
-                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                Trainer
-              </button>
-              <button
-                type="button"
-                onClick={() => handleRoleSelect('GYM_OWNER')}
-                className={`flex-1 py-1 rounded-md font-semibold transition-all ${
-                  selectedRole === 'GYM_OWNER'
-                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                Owner
-              </button>
-            </div>
-
-            <CardBody className="p-5">
-              <form onSubmit={handleSubmit} className="space-y-3.5">
-                
-                <Input
-                  label="Email"
-                  type="email"
-                  icon={Mail}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-
-                <Input
-                  label="Password"
-                  type="password"
-                  icon={Lock}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-
-                <div className="flex items-center justify-between text-xs pt-0.5">
-                  <span className="text-[11px] text-slate-400">
-                    Signing in as <strong className="text-slate-700 dark:text-slate-200">{roleCredentials[selectedRole].name}</strong>
-                  </span>
-                  <a href="#" className="text-[11px] font-semibold text-cyan-600 dark:text-cyan-400 hover:underline">
-                    Forgot?
-                  </a>
-                </div>
-
-                <Button
-                  type="submit"
-                  size="md"
-                  loading={loading}
-                  className="w-full mt-2"
-                >
-                  Enter Workspace
-                </Button>
-
-              </form>
-
-              <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-center text-xs text-slate-500">
-                New facility?{' '}
-                <Link to="/register" className="font-semibold text-cyan-600 dark:text-cyan-400 hover:underline">
-                  Register tenant
-                </Link>
-              </div>
-            </CardBody>
-          </Card>
-
-        </div>
-      </div>
-    </div>
+    <AuthLayout title="Sign in" description="Use your GymFit account to access your workspace.">
+      {state?.registered && <p role="status" className="auth-notice">Account created. Sign in to open your workspace.</p>}
+      <form className="auth-form" onSubmit={submit} method="post">
+        <Input label="Email" type="email" name="email" autoComplete="username" maxLength={254} required />
+        <Input label="Password" type="password" name="password" autoComplete="current-password" maxLength={72} required />
+        {error && <p role="alert" className="auth-error">{error}</p>}
+        <Button type="submit" icon={ArrowUpRight} iconPosition="right" disabled={checking} loading={pending}>Sign in</Button>
+      </form>
+      <p className="auth-footer">Have an invitation? <Link to="/register">Create an account</Link></p>
+    </AuthLayout>
   );
-};
+}
